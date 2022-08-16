@@ -1,22 +1,28 @@
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Font;
-import java.awt.GridLayout;
+import java.awt.*;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 
 public class Board extends JFrame {
     private final JButton[][] squares = new JButton[7][];
-    private boolean clicked1;
-    private boolean clicked2;
-    private boolean clicked3;
-    private boolean clicked4;
-    private boolean clicked5;
-    private boolean clicked6;
-    private boolean clicked7;
-
+    private int column;
+    private int player;
+    private boolean isPlayerEnters;
+    private boolean isGameOver;
 
     public Board() {
+
+        new Thread(() -> {
+            while (true) {
+                try {
+                    isPlayerEnters = false;
+                    Thread.sleep(700);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+
+        this.player = 1;
         for (int i = 0; i < Constant.BOARD_WIDTH; ++i) {
             this.squares[i] = new JButton[Constant.BOARD_WIDTH];
 
@@ -27,6 +33,18 @@ public class Board extends JFrame {
                     square.setBackground(Color.WHITE);
                     square.setFont(new Font(Constant.FONT_NAME, 1, Constant.FONT_SIZE));
                     square.addActionListener((e) -> {
+                        if (!this.isGameOver) {
+                            insertPlayer(Integer.parseInt(square.getText()));
+                            int winner = checkVictory();
+                            if (winner != 0) {
+                                System.out.println("The Winner is: " + winner);
+                                this.isGameOver = true;
+                                Label label = new Label("game over");
+                                label.setBounds(Constant.LABEL_X - (Constant.LABEL_WIDTH / 2),Constant.LABEL_Y,Constant.LABEL_WIDTH,Constant.LABEL_HEIGHT);
+                                label.setFont(new Font(Constant.FONT_NAME, 1, Constant.FONT_SIZE2));
+                                this.add(label);
+                            }
+                        }
                     });
                 } else {
                     square.setEnabled(false);
@@ -34,37 +52,12 @@ public class Board extends JFrame {
                 this.squares[i][j] = square;
                 this.add(square);
             }
-
-            this.squares[0][0].addActionListener((e -> {
-                this.clicked1 = true;
-            }));
-
-            this.squares[0][1].addActionListener((e -> {
-                this.clicked2 = true;
-            }));
-
-            this.squares[0][3].addActionListener((e -> {
-                this.clicked4 = true;
-            }));
-
-            this.squares[0][4].addActionListener((e -> {
-                this.clicked5 = true;
-            }));
-
-            this.squares[0][5].addActionListener((e -> {
-                this.clicked6 = true;
-            }));
-
-            this.squares[0][6].addActionListener((e -> {
-                this.clicked7 = true;
-            }));
-
         }
 
         this.setLocationRelativeTo((Component) null);
         GridLayout gridLayout = new GridLayout(Constant.BOARD_WIDTH, Constant.BOARD_HEIGHT);
         this.setLayout(gridLayout);
-        this.setSize(Constant.BOARD_HEIGHT * Constant.SQUARE_SIZE, Constant.BOARD_HEIGHT * Constant.SQUARE_SIZE);
+        this.setBounds(600, 0, Constant.BOARD_HEIGHT * Constant.SQUARE_SIZE, Constant.BOARD_HEIGHT * Constant.SQUARE_SIZE);
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setVisible(true);
     }
@@ -89,44 +82,179 @@ public class Board extends JFrame {
         return player;
     }
 
-    public boolean isPlayerIsInside(int player) {
+    public boolean isPlayerIsInside() {
         boolean isInside = false;
-        int column = -1;
-        if (clicked1) {
-            column = 1;
-            clicked1 = false;
-        } else if (clicked2) {
-            column = 2;
-            clicked2 = false;
-        } else if (clicked3) {
-            column = 3;
-            clicked3 = false;
-        } else if (clicked4) {
-            column = 4;
-            clicked4 = false;
-        } else if (clicked5) {
-            column = 5;
-            clicked5 = false;
-        } else if (clicked6) {
-            column = 6;
-            clicked6 = false;
-        } else if (clicked7) {
-            column = 7;
-            clicked7 = false;
-        }
-        if (column != -1) {
-            int emptyPlace = 0;
-            for (int i = 1; i < 6; i++) {
-                if (this.getPlayerInSquare(column, i) == 0) {
-                    emptyPlace = i;
-                    break;
-                }
+        int emptyPlace;
+        for (int i = 1; i < 7; i++) {
+            if (this.getPlayerInSquare(column, i) == 0) {
+                emptyPlace = i;
+                placeSquare(column, emptyPlace, player);
+                isInside = true;
+                break;
             }
-            placeSquare(column, emptyPlace, player);
-            isInside = true;
         }
         return isInside;
     }
+
+    public void insertPlayer(int column) {
+        if (!isPlayerEnters) {
+            this.column = column;
+            if (isPlayerIsInside()) {
+                if (this.player == 1) {
+                    this.player = 2;
+                } else {
+                    this.player = 1;
+                }
+                isPlayerEnters = true;
+            }
+        }
+    }
+
+    public int checkVictory() {
+        int winner;
+        int columnWinner =  checkVictoryInColumn();
+        int lineWinner =  checkVictoryInLine();
+        int diagonalDownWinner = checkVictoryInDiagonalDown();
+        int diagonalUpWinner = checkVictoryInDiagonalUp();
+        if (columnWinner != 0) {
+            winner = columnWinner;
+        }else if (lineWinner != 0) {
+            winner = lineWinner;
+        }else if (diagonalDownWinner != 0) {
+            winner = diagonalDownWinner;
+        }else {
+            winner = diagonalUpWinner;
+        }
+        System.out.println(winner + " is the final winner");
+        return winner;
+    }
+
+    public int checkVictoryInLine () {
+        int winner = 0;
+        int currentPlayer = -1;
+        int counter = 0;
+        for (int i = 1; i < 7; i++) {
+            for (int j = 1; j < 7; j++) {
+                currentPlayer = this.getPlayerInSquare(j, i);
+                if (currentPlayer == this.getPlayerInSquare(j + 1, i) && currentPlayer != 0) {
+                    counter++;
+                } else {
+                    counter = 0;
+                }
+
+                if (counter == 3) {
+                    return currentPlayer;
+                }
+            }
+        }
+        return winner;
+    }
+
+    public int checkVictoryInColumn () {
+        int winner = 0;
+        int currentPlayer = -1;
+        int counter = 0;
+        for (int i = 1; i < 8; i++) {
+            for (int j = 1; j < 6; j++) {
+                currentPlayer = this.getPlayerInSquare(i, j);
+                if (currentPlayer == this.getPlayerInSquare(i, j + 1) && currentPlayer != 0) {
+                    counter++;
+                } else {
+                    counter = 0;
+                }
+                if (counter == 3) {
+                    return currentPlayer;
+                }
+            }
+        }
+        return winner;
+    }
+
+    public int checkVictoryInDiagonalDown() {
+        int winner = 0;
+        for (int x = 1; x < 5; x++) {
+            for (int y = 4; y < 7; y++) {
+                int currentPlayer = getPlayerInSquare(x,y);
+                if (currentPlayer != 0) {
+                    if (checkOneDown(x,y)) {
+                        winner = currentPlayer;
+                        break;
+                    }
+                }else {
+                    break;
+                }
+            }
+            if (winner != 0) {
+                break;
+            }
+        }
+        return winner;
+    }
+
+    public boolean checkOneDown (int x, int y) {
+        boolean isWin = true;
+        int counter = 0;
+        int currentPlayer = this.getPlayerInSquare(x, y);
+        while (isWin) {
+            if (x == 1 || y == 6) {
+                isWin = false;
+                break;
+            }
+            if (currentPlayer == this.getPlayerInSquare(x - 1, y + 1) && currentPlayer != 0) {
+                counter++;
+                x--;
+                y++;
+            }else {
+                isWin = false;
+            }
+        }
+
+        if (counter == 3) {
+            isWin = true;
+        }
+        return isWin;
+    }
+
+    public int checkVictoryInDiagonalUp() {
+        int winner = 0;
+        for (int x = 1; x < 8; x++) {
+            for (int y = 1; y < 7; y++) {
+                int currentPlayer = getPlayerInSquare(x,y);
+                if (currentPlayer != 0 && checkOneUp(x,y)) {
+                    winner = currentPlayer;
+                    break;
+                }
+            }
+        }
+        return winner;
+    }
+
+    public boolean checkOneUp(int x, int y) {
+        boolean isWin = true;
+        int counter = 0;
+        int currentPlayer = this.getPlayerInSquare(x, y);
+        while (isWin) {
+            if (x == 7 || y == 6) {
+                isWin = false;
+                break;
+            }
+            if (currentPlayer == this.getPlayerInSquare(x + 1, y + 1)) {
+                counter++;
+                x++;
+                y++;
+            }else {
+                isWin = false;
+            }
+        }
+
+        if (counter == 3) {
+            isWin = true;
+        }else {
+            isWin = false;
+        }
+        return isWin;
+    }
+
 
 
 }

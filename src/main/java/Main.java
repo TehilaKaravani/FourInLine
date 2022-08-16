@@ -1,22 +1,69 @@
 public class Main {
 
+    private boolean isIn1;
+    private boolean isIn2;
+    private boolean finish;
+
+    public Main () {
+        finish = true;
+        play();
+    }
+
     public static void main(String[] args) {
+        Main main = new Main();
+
+    }
+
+    public void play () {
         Board board = new Board();
 
-        new Thread(() -> {
-            while (true) {
-                try {
-                    board.isPlayerIsInside(2);
-
-                    Thread.sleep(10);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-            }
-        }).start();
 
 
+//        board.placeSquare(1,4,2);
+//        board.checkVictoryInDiagonalDown();
+
+
+//        board.placeSquare(2,5,2);
+//        board.placeSquare(3,4,2);
+//        board.placeSquare(4,3,2);
+//        board.placeSquare(5,2,2);
+//        System.out.println(board.checkVictoryInDiagonalDown());
+
+
+
+
+
+
+
+
+
+//
+//        new Thread(() -> {
+//            while (finish) {
+//                try {
+//                    finish = false;
+//                    while (!isIn1) {
+//                        System.out.println("false");
+//                        if (board.isPlayerIsInside(1)) {
+//                            isIn1 = true;
+//                        }
+//                    }
+//                    isIn1 = false;
+//                    while (!isIn2) {
+//                        if (board.isPlayerIsInside(2)) {
+//                            isIn2 = true;
+//                        }
+//                    }
+//                    isIn2 = false;
+//                    finish = true;
+//
+//
+//                    Thread.sleep(500);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }).start();
     }
 
 
